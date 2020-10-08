@@ -26,7 +26,7 @@ def gaussian_blur(img, kernel_size):
 
 def region_of_interest(img, vertices):
     mask = numpy.zeros_like(img)
-    print("mask_shape", mask.shape)
+    # print("mask_shape", mask.shape)
     if len(img.shape) > 2:
         channel_count = img.shape[2]  # i.e. 3 or 4 depending on your image
         ignore_mask_color = (255,) * channel_count
@@ -34,12 +34,14 @@ def region_of_interest(img, vertices):
         ignore_mask_color = 255
 
     cv2.fillPoly(mask, vertices, ignore_mask_color)
-
+    # show_image_in_window(mask)
     masked_image = cv2.bitwise_and(img, mask)
     return masked_image
 
 
-def draw_lines(img, lines, color=[255, 116, 10], thickness=2):
+def draw_lines(img, lines):
+    color = [0, 255, 0]  # RGB
+    thickness = 5
     left_lines_x = []
     left_lines_y = []
     right_lines_x = []
@@ -63,7 +65,6 @@ def draw_lines(img, lines, color=[255, 116, 10], thickness=2):
                 left_lines_x.append(x2)
                 left_lines_y.append(y2)
             elif k > 0.3:
-
                 right_lines_x.append(x1)
                 right_lines_y.append(y1)
                 right_lines_x.append(x2)
@@ -80,7 +81,7 @@ def draw_lines(img, lines, color=[255, 116, 10], thickness=2):
 
 def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
     lines = cv2.HoughLinesP(img, rho, theta, threshold, numpy.array([]), minLineLength=min_line_len, maxLineGap=max_line_gap)
-    print(lines.shape)
+    # print(lines.shape)
     line_img = numpy.zeros((img.shape[0], img.shape[1], 3), dtype=numpy.uint8)
     draw_lines(line_img, lines)
     return line_img
