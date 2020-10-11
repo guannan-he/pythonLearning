@@ -3,10 +3,11 @@ import numpy as np
 import datetime
 from matplotlib import pyplot as plt
 
+
 #references: https://docs.opencv.org/4.4.0/
 mountPoint = "smb://openmediavault.local/wd_share/"
 fileName = ["lulu.jpg", "lena.jpg", "smarties.png"]
-pic = cv2.imread(fileName[2])
+pic = cv2.imread(fileName[1])
 picShape = pic.shape  # H, W, channel
 pass  # capture from camera
 # cap = cv2.VideoCapture(0)  # input from IR camera: 2
@@ -157,26 +158,26 @@ pass  # blurring amd smoothing
 # plt.show()
 #
 pass  # gradiant edge detection
-pic = cv2.imread("messi5.jpg", 0)
-sobelX = cv2.Sobel(pic, cv2.CV_64F, 1, 0, ksize=3)  # val1: x derivative order, val2: x derivative order
-sobelX = np.uint8(np.absolute(sobelX))
-sobelY = cv2.Sobel(pic, cv2.CV_64F, 0, 1, ksize=3)
-sobelY = np.uint8(np.absolute(sobelY))
-lap = cv2.Laplacian(pic, cv2.CV_64F, ksize=3)
-lap = np.uint8(np.absolute(lap))
-sobelCombined = cv2.bitwise_or(sobelX, sobelY)
-canny = cv2.Canny(pic, 100, 200)
-
-titles = ["pic", "sobelX", "sobelY", "lap", "sobelCombined", "canny"]
-images = [pic, sobelX, sobelY, lap, sobelCombined, canny]
-
-for i in range(len(titles)):
-    plt.subplot(2, 3, i + 1)
-    plt.imshow(images[i], 'gray')
-    plt.title(titles[i])
-    plt.xticks([])
-    plt.yticks([])
-plt.show()
+# pic = cv2.imread("messi5.jpg", 0)
+# sobelX = cv2.Sobel(pic, cv2.CV_64F, 1, 0, ksize=3)  # val1: x derivative order, val2: x derivative order
+# sobelX = np.uint8(np.absolute(sobelX))
+# sobelY = cv2.Sobel(pic, cv2.CV_64F, 0, 1, ksize=3)
+# sobelY = np.uint8(np.absolute(sobelY))
+# lap = cv2.Laplacian(pic, cv2.CV_64F, ksize=3)
+# lap = np.uint8(np.absolute(lap))
+# sobelCombined = cv2.bitwise_or(sobelX, sobelY)
+# canny = cv2.Canny(pic, 100, 200)
+#
+# titles = ["pic", "sobelX", "sobelY", "lap", "sobelCombined", "canny"]
+# images = [pic, sobelX, sobelY, lap, sobelCombined, canny]
+#
+# for i in range(len(titles)):
+#     plt.subplot(2, 3, i + 1)
+#     plt.imshow(images[i], 'gray')
+#     plt.title(titles[i])
+#     plt.xticks([])
+#     plt.yticks([])
+# plt.show()
 #
 pass  # canny edge detection
 #
@@ -201,9 +202,84 @@ pass  # canny edge detection
 #         break
 # cv2.destroyAllWindows()
 #
-pass  #
+pass  # subsampling, image pyramid
+# lr = cv2.pyrDown(pic)
+# up = cv2.pyrUp(lr)
+# lap = cv2.subtract(pic, up)  # laplacian pyramid result
+# lap_visual = cv2.cvtColor(lap, cv2.COLOR_BGR2GRAY)
+# lap_visual = cv2.threshold(lap_visual, 1, 255, cv2.THRESH_BINARY)
+# lap_visual = cv2.cvtColor(lap_visual[1], cv2.COLOR_GRAY2BGR)
+# img = [pic, lr, up, lap, lap_visual]
+# title = ["pic", "lr(gaussian)", "up(gaussian)", "lap", "lap_visual"]
+# for i in range(len(img)):
+#     tmp = img[i]
+#     cv2.putText(tmp, title[i], (0, tmp.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), cv2.LINE_4)
+#     cv2.imshow("result", tmp)
+#     cv2.waitKey(0)
+# cv2.destroyAllWindows()
 #
-pass  #
+pass  # image blending using image pyramid
+# apple = cv2.imread("apple.jpg")
+# orange = cv2.imread("orange.jpg")
+# apple_orange = np.hstack((apple[:, 0:256], orange[:, 256:]))
+#
+# # gaussian for apple
+# apple_copy = apple.copy()
+# apple_group = [apple_copy]
+# for i in range(6):
+#     apple_copy = cv2.pyrDown(apple_copy)
+#     apple_group.append(apple_copy)
+#
+# # gaussian for orange
+# orange_copy = orange.copy()
+# orange_group = [orange_copy]
+# for i in range(6):
+#     orange_copy = cv2.pyrDown(orange_copy)
+#     orange_group.append(orange_copy)
+#
+# # laplacian for apple
+# apple_copy = apple_group[5]
+# apple_lp = [apple_copy]
+# for i in range(5, 0, -1):
+#     expand = cv2.pyrUp(apple_group[i])
+#     lap = cv2.subtract(apple_group[i - 1], expand)
+#     apple_lp.append(lap)
+#
+# # laplacian for orange
+# orange_copy = orange_group[5]
+# orange_lp = [orange_copy]
+# for i in range(5, 0, -1):
+#     expand = cv2.pyrUp(orange_group[i])
+#     lap = cv2.subtract(orange_group[i - 1], expand)
+#     orange_lp.append(lap)
+#
+# apple_orange_prymaid = []
+# n = 0
+# for apple_lap, orange_lap in zip(apple_lp, orange_lp):
+#     n += 1
+#     col, rol, ch = apple_lap.shape
+#     laplacian = np.hstack((apple_lap[:,0:col // 2], orange_lap[:, col // 2:]))
+#     apple_orange_prymaid.append(laplacian)
+#
+# # reconstruct
+# apple_orange_recostruct = apple_orange_prymaid[0]
+# for i in range(1, 6):
+#     apple_orange_recostruct = cv2.pyrUp(apple_orange_recostruct)
+#     apple_orange_recostruct = cv2.add(apple_orange_prymaid[i], apple_orange_recostruct)
+#
+#
+# img = [apple, orange, apple_orange, apple_orange_recostruct]
+# title = ["apple", "orange", "apple_orange", "apple_orange_recostruct"]
+# plt.figure()
+# plt.title("cock")
+# for i in range(len(img)):
+#     plt.subplot(2, 3, i + 1)
+#     tmp = cv2.cvtColor(img[i], cv2.COLOR_BGR2RGB)
+#     plt.imshow(tmp)
+#     plt.title(title[i])
+#     plt.xticks([])
+#     plt.yticks([])
+# plt.show()
 #
 pass  #
 #

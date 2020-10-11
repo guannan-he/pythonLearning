@@ -9,7 +9,7 @@ import subfunctions
 pic1Name = "20200717190632173"
 pic2Name = "20200717190731576"
 
-nameFlag = pic2Name
+nameFlag = pic1Name
 
 # image process
 imToProcess = cv2.imread(f"src/{nameFlag}.jpg")
@@ -38,7 +38,7 @@ lines = subfunctions.hough_lines(partial, rho, theta, threshold, min_line_len, m
 final = subfunctions.weighted_img(lines, imToProcess)
 
 # show images
-if False:
+if True:
     imList = [imToProcess, gray, blur, edges, partial, lines, final]
     for image in imList:
         subfunctions.show_image_in_window(image)
