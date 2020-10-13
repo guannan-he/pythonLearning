@@ -4,7 +4,8 @@ import datetime
 from matplotlib import pyplot as plt
 
 
-#references: https://docs.opencv.org/4.4.0/
+# references: https://docs.opencv.org/4.4.0/
+#             https://www.youtube.com/playlist?list=PLS1QulWo1RIa7D1O6skqDQ-JZ1GGHKK-K
 mountPoint = "smb://openmediavault.local/wd_share/"
 fileName = ["lulu.jpg", "lena.jpg", "smarties.png"]
 pic = cv2.imread(fileName[1])
@@ -400,7 +401,88 @@ pass  # histogram
 # plt.show()
 #
 pass  # template matching
-
+# get messi and his face
+# messi = cv2.imread("messi5.jpg")
+#
+#
+# def printLocation(event, x, y, flags, param):
+#     if event == cv2.EVENT_LBUTTONDOWN:
+#         print(f"{x}, {y}")
+#
+# messiFace = np.stack((messi[92:131, 223:258]))
+# grayMessi = cv2.cvtColor(messi, cv2.COLOR_BGR2GRAY)
+# grayFace = cv2.cvtColor(messiFace, cv2.COLOR_BGR2GRAY)
+# res = cv2.matchTemplate(grayMessi, grayFace, cv2.TM_CCORR_NORMED)
+# threshold = 0.98
+# loc = np.where(res >= threshold)
+# print(f"{len(loc[0])} results matched" )
+# for i in range(len(loc[0])):
+#     x = loc[0][i]
+#     y = loc[1][i]
+#     messi = cv2.rectangle(messi, (y, x), (y + grayFace.shape[1], x + grayFace.shape[0]), (0, 255, 0), 3)
+# cv2.imshow("pic", messi)
+# cv2.imshow("messi face", messiFace)
+# cv2.setMouseCallback("pic", printLocation)
+# # find image
+#
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+#
+pass  # hgn face matching
+# # get a hgn face
+# if False:
+#     cap = cv2.VideoCapture(0)
+#     _, frame = cap.read()
+#     cap.release()
+#     cv2.imshow("hgn", frame)
+#     if cv2.waitKey(0) == ord("s"):
+#         cv2.imwrite("hgnFace.jpg", frame)
+#     cv2.destroyAllWindows()
+#     hgnFace = cv2.imread("hgnFace.jpg")
+#
+#
+#     def printLocation(event, x, y, flags, param):
+#         if event == cv2.EVENT_LBUTTONDOWN:
+#             print(f"{x}, {y}")
+#
+#
+#     cv2.imshow("hgnFace", hgnFace)
+#     cv2.setMouseCallback("hgnFace", printLocation)
+#     cv2.waitKey(0)
+#     cv2.destroyAllWindows()
+# hgnFace = cv2.imread("hgnFace.jpg")
+# hgnFace = np.stack(hgnFace[178:351, 281:399])
+# grayFace = cv2.cvtColor(hgnFace, cv2.COLOR_BGR2GRAY)
+# cv2.imshow("hgnFace", hgnFace)
+# # cv2.waitKey(0)
+# cap = cv2.VideoCapture(0)
+# threshols = 0.6
+# w = grayFace.shape[1]
+# h = grayFace.shape[0]
+# while cap.isOpened():
+#     _, frame = cap.read()
+#     grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+#     res = cv2.matchTemplate(grayFrame, grayFace, cv2.TM_CCOEFF_NORMED)
+#     loc = np.where(res >= threshols)
+#     print(f"{len(loc[0])} results matched")
+#     for i in range(len(loc[0])):
+#         x = loc[0][i]
+#         y = loc[1][i]
+#         frame = cv2.rectangle(frame, (y, x), (y + w, x + h), (0, 255, 0), 2)
+#     cv2.imshow("capture", frame)
+#     if cv2.waitKey(40) == ord("q"):
+#         break
+# cv2.destroyAllWindows()
+#
+pass  #
+#
+pass  #
+#
+pass  #
+#
+pass  #
+#
+pass  #
 #
 pass  #
 #
