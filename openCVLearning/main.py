@@ -223,14 +223,13 @@ pass  # image blending using image pyramid
 # orange = cv2.imread("orange.jpg")
 # apple_orange = np.hstack((apple[:, 0:256], orange[:, 256:]))
 #
-# # gaussian for apple
+# # gaussian pyramid down for apple
 # apple_copy = apple.copy()
 # apple_group = [apple_copy]
 # for i in range(6):
 #     apple_copy = cv2.pyrDown(apple_copy)
 #     apple_group.append(apple_copy)
-#
-# # gaussian for orange
+# # gaussian pyramid down for orange
 # orange_copy = orange.copy()
 # orange_group = [orange_copy]
 # for i in range(6):
@@ -253,6 +252,7 @@ pass  # image blending using image pyramid
 #     lap = cv2.subtract(orange_group[i - 1], expand)
 #     orange_lp.append(lap)
 #
+# # laplacian for apple_orange
 # apple_orange_prymaid = []
 # n = 0
 # for apple_lap, orange_lap in zip(apple_lp, orange_lp):
@@ -270,8 +270,7 @@ pass  # image blending using image pyramid
 #
 # img = [apple, orange, apple_orange, apple_orange_recostruct]
 # title = ["apple", "orange", "apple_orange", "apple_orange_recostruct"]
-# plt.figure()
-# plt.title("cock")
+# plt.figure("result")
 # for i in range(len(img)):
 #     plt.subplot(2, 3, i + 1)
 #     tmp = cv2.cvtColor(img[i], cv2.COLOR_BGR2RGB)
@@ -280,8 +279,128 @@ pass  # image blending using image pyramid
 #     plt.xticks([])
 #     plt.yticks([])
 # plt.show()
+# plt.figure("laplacian pyramid")
+# for i in range(len(apple_orange_prymaid)):
+#     # pass
+#     plt.subplot(1,6,i + 1)
+#     tmp = apple_orange_prymaid[i]
+#     # tmp = cv2.bitwise_or(tmp, np.zeros(tmp.shape, np.uint8), 20)
+#     tmp = cv2.cvtColor(tmp, cv2.COLOR_BGR2RGB)
 #
-pass  #
+#     plt.imshow(tmp)
+#     plt.xticks([])
+#     plt.yticks([])
+# plt.show()
+#
+pass  # image contours
+# img = cv2.imread("opencv-logo.png")
+# imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # using binary image find threshold
+# ret, thresh = cv2.cv2.threshold(imgGray, 63, 255, cv2.THRESH_BINARY)
+# contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+# print(f"contour number: {str(len(contours))}")
+# res = cv2.drawContours(img.copy(), contours, -1, (255, 255, 255), 5)
+#
+# imag = [img, imgGray, thresh, res]
+# title = ["cvLogo", "imgGray", "thresh", f"{str(len(contours))} contours founded"]
+# plt.figure("results")
+# for i in range(len(imag)):
+#     plt.subplot(2, 3, i + 1)
+#     tmp = cv2.cvtColor(imag[i], cv2.COLOR_BGR2RGB)
+#     plt.imshow(tmp)
+#     plt.title(title[i])
+#     plt.xticks([])
+#     plt.yticks([])
+# plt.show()
+#
+pass  # motion detection
+# cap = cv2.VideoCapture("vtest.avi")
+# _, frame1 = cap.read()
+# _, frame2 = cap.read()
+#
+# while cap.isOpened():
+#     # read and preprocess
+#     diff = cv2.absdiff(frame1, frame2)
+#     frame1 = frame2
+#     _, frame2 = cap.read()
+#     gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+#     # motion detection
+#     kernelSize = 11
+#     blur = cv2.GaussianBlur(gray, (kernelSize, kernelSize), 0)
+#     _, thresh = cv2.threshold(blur, 30, 255, cv2.THRESH_BINARY)
+#     kernel = np.ones((kernelSize, kernelSize), np.uint8)
+#     dilated = cv2.dilate(thresh, None, iterations=3)
+#     contours, _ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+#     rect = frame1.copy()
+#     flag = False
+#     for contour in contours:
+#         (x, y, w, h) = cv2.boundingRect(contour)
+#         if w * h < 900:
+#             continue
+#         rect = cv2.rectangle(rect, (x, y), (x + w, y + h), (0, 255, 0), 2)
+#         flag = True
+#     if flag:
+#         rect = cv2.putText(rect, "have moving object", (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), cv2.LINE_4)
+#     else:
+#         rect = cv2.putText(rect, "no moving object", (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), cv2.LINE_4)
+#     draw_contour = cv2.drawContours(frame1.copy(), contours, -1, (0, 255, 0), 2)
+#     # show frame
+#     cv2.imshow("original", frame1)
+#     cv2.imshow("diff", dilated)
+#     cv2.imshow("contour", draw_contour)
+#     cv2.imshow("rectangle", rect)
+#     if cv2.waitKey(40) == ord("q"):
+#         print("interrupted by user")
+#         break
+# cv2.destroyAllWindows()
+# cap.release()
+#
+pass  # shape detection
+# shape = cv2.imread("shapes.jpg")
+# shapesGray = cv2.cvtColor(shape, cv2.COLOR_BGR2GRAY)
+# _, thresh = cv2.threshold(shapesGray, 63, 255, cv2.THRESH_BINARY)
+# contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+# thresCopy = cv2.cvtColor(thresh.copy(), cv2.COLOR_GRAY2BGR)
+# for contour in contours:
+#     approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
+#     thresCopy = cv2.drawContours(thresCopy, [approx], -1, (0, 0, 255), 5)
+#     x = approx.ravel()[0]
+#     y = approx.ravel()[1]
+#     if len(approx) == 3:
+#         str = "triangle"
+#     elif len(approx) == 4:
+#         _, _, w, h = cv2.boundingRect(approx)
+#         if abs(w / h - 1) < 0.1:
+#             str = "square"
+#         else:
+#             str = "rectangle"
+#     elif len(approx) == 5:
+#         str = "pentagon"
+#     elif len(approx) == 10:
+#         str = "star"
+#     else:
+#         str = "circle"
+#     thresCopy = cv2.putText(thresCopy, str, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), cv2.LINE_4)
+#
+#
+# cv2.imshow("shapes", shape)
+# cv2.imshow("binary", thresh)
+# cv2.imshow("contours", thresCopy)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+#
+pass  # histogram
+# # img = np.zeros((200, 200), np.uint8)
+# # img = cv2.imread("lulu.jpg")
+# img = cv2.imread("lena.jpg")
+# img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+# hist = cv2.calcHist([img], [0], None, [256], [0, 255])
+# plt.plot(hist)
+#
+# # plt.hist(img.ravel(), 256, [0, 255])
+# plt.show()
+#
+pass  # template matching
+
 #
 pass  #
 #
