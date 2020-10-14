@@ -564,92 +564,103 @@ pass  # lane detection
 # cv2.destroyAllWindows()
 #
 pass  # lane detection on video frame
-
-
-def markLine(img, vertices):
-    blur = cv2.blur(img, (9, 9))
-    gray = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)
-    _, thresh = cv2.threshold(gray, None, 255, cv2.THRESH_OTSU)
-    roi = cv2.bitwise_and(thresh, vertices)
-    canny = cv2.Canny(roi, 50, 150)
-    lines = cv2.HoughLinesP(canny, 1, np.pi / 180, 50, minLineLength=10, maxLineGap=30)
-    # print(len(lines))
-    # use 3rd polyline
-    left_x = []
-    left_y = []
-    right_x = []
-    right_y = []
-    # assume x2 always >= x1
-    for line in lines:
-        x1, y1, x2, y2 = line[0]
-        # cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0))
-        # print(f"{x1},{x2}:{y1},{y2}:{x1 >= x2},{y1 >= y2}")
-        if 2 * abs(y2 - y1) - (x2 - x1) < 0:
-            continue
-        elif y1 > y2:
-            left_x.append(x1)
-            left_x.append(x2)
-            left_y.append(y1)
-            left_y.append(y2)
-        else:
-            right_x.append(x1)
-            right_x.append(x2)
-            right_y.append(y1)
-            right_y.append(y2)
-    if len(left_x) > 3:
-        paraL = np.polyfit(left_x, left_y, 3)
-        left_x = np.sort(left_x)
-        left_y = ((paraL[0] * left_x + paraL[1]) * left_x + paraL[2]) * left_x + paraL[3]
-        pt1 = (left_x[0], int(left_y[0]))
-        for i in range(len(left_x) - 1):
-            pt2 = (left_x[i + 1], int(left_y[i + 1]))
-            cv2.line(img, pt1, pt2, (0, 255, 0), 5)
-            pt1 = pt2
-    if len(right_x) > 3:
-        paraR = np.polyfit(right_x, right_y, 3)
-        right_x = np.sort(right_x)
-        right_y = ((paraR[0] * right_x + paraR[1]) * right_x + paraR[2]) * right_x + paraR[3]
-        pt1 = (right_x[0], int(right_y[0]))
-        for i in range(len(right_x) - 1):
-            pt2 = (right_x[i + 1], int(right_y[i + 1]))
-            cv2.line(img, pt1, pt2, (0, 255, 0), 5)
-            pt1 = pt2
-    return img
-
-
-fileName = ["straight.mp4", "curvature.mp4"]
-cap = cv2.VideoCapture(fileName[1])
-h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-roiVertices = np.array([[20, h],
-                        [w // 2 - 20, int(h * 0.6)],
-                        [w // 2 + 20, int(h * 0.6)],
-                        [w - 20, h]], dtype=np.int32)
-roiMask = cv2.fillPoly(np.zeros([h, w], np.uint8), [roiVertices], 255)
-if False:
-    _, frame = cap.read()
-    cap.release()
-    cv2.imshow("frame", roiMask)
-    processedFrame = markLine(frame, roiMask)
-    cv2.imshow("processed", processedFrame)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    exit(0)
-while cap.isOpened():
-    isRead, frame = cap.read()
-    if not isRead:
-        print("exited by EOF")
-        break
-    cv2.imshow("frame", frame)
-    processedFrame = markLine(frame, roiMask)
-    cv2.imshow("processed", processedFrame)
-    if cv2.waitKey(10) == ord("q"):
-        print("exited by user")
-        break
-cap.release()
-cv2.destroyAllWindows()
 #
-pass  #
+#
+# def markLine(img, vertices):
+#     blur = cv2.blur(img, (9, 9))
+#     gray = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)
+#     _, thresh = cv2.threshold(gray, None, 255, cv2.THRESH_OTSU)
+#     roi = cv2.bitwise_and(thresh, vertices)
+#     canny = cv2.Canny(roi, 100, 100)
+#     lines = cv2.HoughLinesP(canny, 1, np.pi / 180, 50, minLineLength=10, maxLineGap=30)
+#     # print(len(lines))
+#     # use 3rd polyline
+#     left_x = []
+#     left_y = []
+#     right_x = []
+#     right_y = []
+#     # assume x2 always >= x1
+#     for line in lines:
+#         x1, y1, x2, y2 = line[0]
+#         # cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0))
+#         # print(f"{x1},{x2}:{y1},{y2}:{x1 >= x2},{y1 >= y2}")
+#         if 2 * abs(y2 - y1) - (x2 - x1) < 0:
+#             continue
+#         elif y1 > y2:
+#             left_x.append(x1)
+#             left_x.append(x2)
+#             left_y.append(y1)
+#             left_y.append(y2)
+#         else:
+#             right_x.append(x1)
+#             right_x.append(x2)
+#             right_y.append(y1)
+#             right_y.append(y2)
+#     if len(left_x) > 3:
+#         paraL = np.polyfit(left_x, left_y, 3)
+#         left_x = np.sort(left_x)
+#         left_y = ((paraL[0] * left_x + paraL[1]) * left_x + paraL[2]) * left_x + paraL[3]
+#         pt1 = (left_x[0], int(left_y[0]))
+#         for i in range(len(left_x) - 1):
+#             pt2 = (left_x[i + 1], int(left_y[i + 1]))
+#             cv2.line(img, pt1, pt2, (0, 255, 0), 5)
+#             pt1 = pt2
+#     if len(right_x) > 3:
+#         paraR = np.polyfit(right_x, right_y, 3)
+#         right_x = np.sort(right_x)
+#         right_y = ((paraR[0] * right_x + paraR[1]) * right_x + paraR[2]) * right_x + paraR[3]
+#         pt1 = (right_x[0], int(right_y[0]))
+#         for i in range(len(right_x) - 1):
+#             pt2 = (right_x[i + 1], int(right_y[i + 1]))
+#             cv2.line(img, pt1, pt2, (0, 255, 0), 5)
+#             pt1 = pt2
+#     return img
+#
+#
+# fileName = ["straight.mp4", "curvature.mp4"]
+# cap = cv2.VideoCapture(fileName[1])
+# h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+# w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+# roiVertices = np.array([[20, h],
+#                         [w // 2 - 20, int(h * 0.6)],
+#                         [w // 2 + 20, int(h * 0.6)],
+#                         [w - 20, h]], dtype=np.int32)
+# roiMask = cv2.fillPoly(np.zeros([h, w], np.uint8), [roiVertices], 255)
+# if False:
+#     _, frame = cap.read()
+#     cap.release()
+#     cv2.imshow("frame", roiMask)
+#     processedFrame = markLine(frame, roiMask)
+#     cv2.imshow("processed", processedFrame)
+#     cv2.waitKey(0)
+#     cv2.destroyAllWindows()
+#     exit(0)
+# while cap.isOpened():
+#     isRead, frame = cap.read()
+#     if not isRead:
+#         print("exited by EOF")
+#         break
+#     cv2.imshow("frame", frame)
+#     processedFrame = markLine(frame, roiMask)
+#     cv2.imshow("processed", processedFrame)
+#     if cv2.waitKey(10) == ord("q"):
+#         print("exited by user")
+#         break
+# cap.release()
+# cv2.destroyAllWindows()
+#
+pass  # hough circle transform
+smarties = cv2.imread("smarties.png")
+gray = cv2.cvtColor(smarties, cv2.COLOR_BGR2GRAY)
+gray = cv2.medianBlur(gray, 5)
+circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 20, param1=50, param2=50, minRadius=0, maxRadius=0)
+detected_circles = np.uint16(np.around(circles))
+for x, y, r in detected_circles[0,:]:
+    cv2.circle(smarties, (x, y), r, (255, 0, 255), 5)
+
+cv2.imshow("smarties", smarties)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 #
 pass  #
 #
