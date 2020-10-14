@@ -474,13 +474,180 @@ pass  # hgn face matching
 #         break
 # cv2.destroyAllWindows()
 #
-pass  #
+pass  # hough transform (hgn)
+# blank = np.zeros((512, 512), np.uint8)
+# lineImage = cv2.line(blank.copy(), (0, 0), (511, 511), 255)
+# box = np.zeros((1536, 1536), np.uint8)
+# for i in range(512):
+#     for j in range(512):
+#         if lineImage[i][j] == 0:
+#             continue
+#         else:
+#             for k in range(1536):
+#                 theta = k / 1536 * np.pi
+#                 val = i * np.cos(theta) + j * np.sin(theta)
+#                 box[k][int(val) + 768] += 1
+# print(str(box.max()))
+# loc = np.where(box == box.max())
+# theta = loc[0][0] * np.pi / 1536
+# rou = loc[1][1] - 768
+# a = -1 / np.tan(theta)
+# b = rou / np.sin(theta)
+# pt1 = (0, np.uint(0 * a + b))
+# pt2 = (511, np.uint(511 * a + b))
+# afterHough = cv2.line(blank.copy(), pt1, pt2, (255))
+# print(f"theta = {theta}, rou = {rou}")
+# _, box = cv2.threshold(box, 0, 255, cv2.THRESH_BINARY)
+# cv2.imshow("org", lineImage)
+# cv2.imshow("hough", box)
+# cv2.imshow("afterHough", afterHough)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
 #
-pass  #
+pass  # hough transform (indian tutorial)
+# filePath = ["../openCVLine/src/20200717190731576.jpg", "../openCVLine/src/20200717190632173.jpg","sudoku.png"]
+# pic = cv2.imread(filePath[1])
+# canny = cv2.Canny(cv2.cvtColor(pic, cv2.COLOR_BGR2GRAY), 50, 150, apertureSize=3)
+# lines = cv2.HoughLines(canny, 1, np.pi / 180, 150)  # returns rou and theta, val1, val2 are resolution, val3, is thresh
+# addLine = pic.copy()
+# for line in lines:
+#     rou, theta = line[0]
+#     a = np.cos(theta)
+#     b = np.sin(theta)
+#     x0 = a * rou
+#     y0 = b * rou
+#     x1 = int(x0 + 1000 * (-b))
+#     y1 = int(y0 + 1000 * (a))
+#     x2 = int(x0 + 1000 * (b))
+#     y2 = int(y0 + 1000 * (-a))
+#     cv2.line(addLine, (x1, y1), (x2, y2), (255, 0, 0), 2)
+# addLineP = pic.copy()
+# linesP = cv2.HoughLinesP(canny, 1, np.pi / 180, 100, minLineLength=100, maxLineGap=10)  # returns start point and end point
+# for lineP in linesP:
+#     x1, y1, x2, y2 = lineP[0]
+#     cv2.line(addLineP, (x1, y1), (x2, y2), (0, 255, 0), 2)
 #
-pass  #
+# cv2.imshow("pic", pic)
+# cv2.imshow("canny", canny)
+# cv2.imshow("addLine", addLine)
+# cv2.imshow("addLineP", addLineP)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
 #
-pass  #
+pass  # lane detection
+# filePath = ["../openCVLine/src/20200717190731576.jpg", "../openCVLine/src/20200717190632173.jpg","sudoku.png"]
+# pic = cv2.imread(filePath[0])
+# gray = cv2.cvtColor(pic, cv2.COLOR_BGR2GRAY)
+# h, w = gray.shape
+# ROI_Vertices = np.array([[0, h],
+#                           [0, h - 20],
+#                           [w // 2 - 20, h // 2 - 20],
+#                           [w // 2 + 20, h // 2 - 20],
+#                           [w, h - 20],
+#                           [w, h]])
+# mask = cv2.fillPoly(np.zeros([h, w], np.uint8), [ROI_Vertices], 255)
+# gray = cv2.blur(gray, (9, 9))
+# _, gray = cv2.threshold(gray, None, 255, cv2.THRESH_OTSU)
+# canny = cv2.Canny(gray, 150, 250)
+# canny = cv2.bitwise_and(canny, mask)
+# linesP = cv2.HoughLinesP(canny, 1, np.pi / 180, 180, minLineLength=50, maxLineGap=15)
+# for line in linesP:
+#     x1, y1, x2, y2 = line[0]
+#     cv2.line(pic, (x1, y1), (x2, y2), (0, 255, 0), 5)
+# cv2.imshow("pic", pic)
+# cv2.imshow("gray", gray)
+# cv2.imshow("canny", canny)
+#
+#
+#
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+#
+pass  # lane detection on video frame
+
+
+def markLine(img, vertices):
+    blur = cv2.blur(img, (9, 9))
+    gray = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)
+    _, thresh = cv2.threshold(gray, None, 255, cv2.THRESH_OTSU)
+    roi = cv2.bitwise_and(thresh, vertices)
+    canny = cv2.Canny(roi, 50, 150)
+    lines = cv2.HoughLinesP(canny, 1, np.pi / 180, 50, minLineLength=10, maxLineGap=30)
+    # print(len(lines))
+    # use 3rd polyline
+    left_x = []
+    left_y = []
+    right_x = []
+    right_y = []
+    # assume x2 always >= x1
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        # cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0))
+        # print(f"{x1},{x2}:{y1},{y2}:{x1 >= x2},{y1 >= y2}")
+        if 2 * abs(y2 - y1) - (x2 - x1) < 0:
+            continue
+        elif y1 > y2:
+            left_x.append(x1)
+            left_x.append(x2)
+            left_y.append(y1)
+            left_y.append(y2)
+        else:
+            right_x.append(x1)
+            right_x.append(x2)
+            right_y.append(y1)
+            right_y.append(y2)
+    if len(left_x) > 3:
+        paraL = np.polyfit(left_x, left_y, 3)
+        left_x = np.sort(left_x)
+        left_y = ((paraL[0] * left_x + paraL[1]) * left_x + paraL[2]) * left_x + paraL[3]
+        pt1 = (left_x[0], int(left_y[0]))
+        for i in range(len(left_x) - 1):
+            pt2 = (left_x[i + 1], int(left_y[i + 1]))
+            cv2.line(img, pt1, pt2, (0, 255, 0), 5)
+            pt1 = pt2
+    if len(right_x) > 3:
+        paraR = np.polyfit(right_x, right_y, 3)
+        right_x = np.sort(right_x)
+        right_y = ((paraR[0] * right_x + paraR[1]) * right_x + paraR[2]) * right_x + paraR[3]
+        pt1 = (right_x[0], int(right_y[0]))
+        for i in range(len(right_x) - 1):
+            pt2 = (right_x[i + 1], int(right_y[i + 1]))
+            cv2.line(img, pt1, pt2, (0, 255, 0), 5)
+            pt1 = pt2
+    return img
+
+
+fileName = ["straight.mp4", "curvature.mp4"]
+cap = cv2.VideoCapture(fileName[1])
+h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+roiVertices = np.array([[20, h],
+                        [w // 2 - 20, int(h * 0.6)],
+                        [w // 2 + 20, int(h * 0.6)],
+                        [w - 20, h]], dtype=np.int32)
+roiMask = cv2.fillPoly(np.zeros([h, w], np.uint8), [roiVertices], 255)
+if False:
+    _, frame = cap.read()
+    cap.release()
+    cv2.imshow("frame", roiMask)
+    processedFrame = markLine(frame, roiMask)
+    cv2.imshow("processed", processedFrame)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    exit(0)
+while cap.isOpened():
+    isRead, frame = cap.read()
+    if not isRead:
+        print("exited by EOF")
+        break
+    cv2.imshow("frame", frame)
+    processedFrame = markLine(frame, roiMask)
+    cv2.imshow("processed", processedFrame)
+    if cv2.waitKey(10) == ord("q"):
+        print("exited by user")
+        break
+cap.release()
+cv2.destroyAllWindows()
 #
 pass  #
 #
@@ -496,4 +663,5 @@ if False:
     if key == ord('s'):
         cv2.imwrite("result.jpg", pic)
     cv2.destroyAllWindows()
+
 exit(0)
