@@ -430,32 +430,16 @@ pass  # template matching
 #
 pass  # hgn face matching
 # # get a hgn face
-# if False:
-#     cap = cv2.VideoCapture(0)
-#     _, frame = cap.read()
-#     cap.release()
-#     cv2.imshow("hgn", frame)
-#     if cv2.waitKey(0) == ord("s"):
-#         cv2.imwrite("hgnFace.jpg", frame)
-#     cv2.destroyAllWindows()
-#     hgnFace = cv2.imread("hgnFace.jpg")
-#
-#
-#     def printLocation(event, x, y, flags, param):
-#         if event == cv2.EVENT_LBUTTONDOWN:
-#             print(f"{x}, {y}")
-#
-#
-#     cv2.imshow("hgnFace", hgnFace)
-#     cv2.setMouseCallback("hgnFace", printLocation)
-#     cv2.waitKey(0)
-#     cv2.destroyAllWindows()
-# hgnFace = cv2.imread("hgnFace.jpg")
-# hgnFace = np.stack(hgnFace[178:351, 281:399])
+# face_cascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+# cap = cv2.VideoCapture(0)
+# _, frame = cap.read()
+# faces = face_cascade.detectMultiScale(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), 1.1, 4)
+# x, y, w, h = faces[0]
+# hgnFace = frame[y: y + h, x: x + w]
 # grayFace = cv2.cvtColor(hgnFace, cv2.COLOR_BGR2GRAY)
 # cv2.imshow("hgnFace", hgnFace)
 # # cv2.waitKey(0)
-# cap = cv2.VideoCapture(0)
+#
 # threshols = 0.6
 # w = grayFace.shape[1]
 # h = grayFace.shape[0]
@@ -650,17 +634,56 @@ pass  # lane detection on video frame
 # cv2.destroyAllWindows()
 #
 pass  # hough circle transform
-smarties = cv2.imread("smarties.png")
-gray = cv2.cvtColor(smarties, cv2.COLOR_BGR2GRAY)
-gray = cv2.medianBlur(gray, 5)
-circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 20, param1=50, param2=50, minRadius=0, maxRadius=0)
-detected_circles = np.uint16(np.around(circles))
-for x, y, r in detected_circles[0,:]:
-    cv2.circle(smarties, (x, y), r, (255, 0, 255), 5)
+# smarties = cv2.imread("smarties.png")
+# gray = cv2.cvtColor(smarties, cv2.COLOR_BGR2GRAY)
+# gray = cv2.medianBlur(gray, 5)
+# circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 20, param1=50, param2=50, minRadius=0, maxRadius=0)
+# detected_circles = np.uint16(np.around(circles))
+# for x, y, r in detected_circles[0,:]:
+#     cv2.circle(smarties, (x, y), r, (255, 0, 255), 5)
+#
+# cv2.imshow("smarties", smarties)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+#
+pass  # haar cascade classifier
+# haar comes with a trainer and a classifier
+# references https://github.com/opencv/opencv/tree/master/data/haarcascades
+face_cascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+eye_cascade = cv2.CascadeClassifier("haarcascade_eye_tree_eyeglasses.xml")
+cap = cv2.VideoCapture(0)
+while cap.isOpened():
+    _, frame = cap.read()
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, 1.2, 4)
+    for face in faces:
+        x, y, w, h = face
+        roi_gray = gray[y: y + h, x: x + w]  # make sure no eyes outside the face
+        roi_color = frame[y: y + h, x: x + w]
+        eyes = eye_cascade.detectMultiScale(roi_gray, 1.1, 4)
+        for eye in eyes:
+            x, y, w, h = eye
+            cv2.rectangle(roi_color, (x, y), (x + w, y + h), (255, 0, 0), 5)
+        x, y, w, h = face
+        frame[y: y + h, x: x + w] = roi_color
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 5)
+        cv2.imshow("face", frame)
 
-cv2.imshow("smarties", smarties)
-cv2.waitKey(0)
+    if cv2.waitKey(20) == ord("q"):
+        print("exit by user")
+        break
+cap.release()
 cv2.destroyAllWindows()
+#
+pass  #
+#
+pass  #
+#
+pass  #
+#
+pass  #
+#
+pass  #
 #
 pass  #
 #
