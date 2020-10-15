@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import datetime
+import glob
 from matplotlib import pyplot as plt
 
 
@@ -802,7 +803,69 @@ pass  # camera calibration
 # https://www.youtube.com/watch?v=HNfPbw-1e_w&list=PLAp0ZhYvW6XbEveYeefGSuLhaPlFML9gP&index=14
 # https://docs.opencv.org/3.4/d4/d94/tutorial_camera_calibration.html
 # https://docs.opencv.org/master/dc/dbb/tutorial_py_calibration.html
-
+pass  # hgn calibration(undone)
+# calibrate = cv2.imread("./camera_calibration/hp_tablet_01.jpg")
+# caliGray = cv2.cvtColor(calibrate, cv2.COLOR_BGR2GRAY)
+# # hgn chess cross detection
+# _, caliGray = cv2.threshold(caliGray, None, 255, cv2.THRESH_OTSU)
+# ROIPoly = np.array([[320, 670],
+#                     [840, 640],
+#                     [890, 1180],
+#                     [380, 1260]], np.int32)
+# blank = np.zeros_like(caliGray)
+# ROIMask = cv2.fillPoly(blank, [ROIPoly], 255)
+# # caliGray = cv2.bitwise_and(caliGray, ROIMask)
+# corners = cv2.goodFeaturesToTrack(caliGray, 49, 0.01, 10, mask=ROIMask)
+# for corner in corners:
+#     x, y = corner.ravel()
+#     cv2.circle(calibrate, (x, y), 5, (0, 255, 0), -1)
+pass  # official method
+images = glob.glob("./camera_calibration/*.jpg")
+objPoints = [] # 3d point in real world space
+imgPoints = [] # 2d points in image plane.
+objP = np.zeros((7 * 7, 3), np.float32)
+objP[:, :2] = np.mgrid[0:7, 0:7].T.reshape(-1, 2)
+objP = objP * 24
+for fName in images:
+    calibrate = cv2.imread(fName)
+    h, w = calibrate.shape[:2]
+    if h > w:
+        calibrate = cv2.rotate(calibrate, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    caliGray = cv2.cvtColor(calibrate, cv2.COLOR_BGR2GRAY)
+    ret, corners = cv2.findChessboardCorners(caliGray, (7, 7))
+    if ret:
+        objPoints.append(objP)
+        imgPoints.append(corners)
+        cv2.drawChessboardCorners(calibrate, (7, 7), corners, ret)
+    cv2.imshow("chess", calibrate)
+    cv2.waitKey(50)
+cv2.destroyAllWindows()
+ret, mtx, dist, rVecs, tVecs = cv2.calibrateCamera(objPoints, imgPoints, caliGray.shape[::-1], None, None)
+test = cv2.imread("./camera_calibration/test/test_01.jpg")
+h, w = test.shape[:2]
+camMat, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), 0.5, (w, h))
+# un distort
+dst = cv2.undistort(test, mtx, dist, None, camMat)
+x, y, w, h = roi
+dst = dst[y:y+h, x:x+w]
+# remapping
+mapx, mapy = cv2.initUndistortRectifyMap(mtx, dist, None, camMat, (w,h), 5)
+reMap = cv2.remap(test, mapx, mapy, cv2.INTER_LINEAR)
+x, y, w, h = roi
+reMap = reMap[y:y+h, x:x+w]
+# re-projection error
+mean_error = 0
+for i in range(len(objPoints)):
+    imgPoints2, _ = cv2.projectPoints(objPoints[i], rVecs[i], tVecs[i], mtx, dist)
+    error = cv2.norm(imgPoints[i], imgPoints2, cv2.NORM_L2)/len(imgPoints2)
+    mean_error += error
+print( "total error: {}".format(mean_error/len(objPoints)) )
+# draw image
+cv2.imshow("test", test)
+cv2.imshow("distort", dst)
+cv2.imshow("reMap", reMap)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 #
 pass  #
 #
