@@ -713,11 +713,96 @@ pass  # harris corner detection & Shi Tomasi corner detection
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
 #
-pass  #
+pass  # background subtraction
 #
-pass  #
+# def imgBlur(img, kernel, iter):
+#     # _, img = cv2.threshold(img, 200, 255, cv2.THRESH_BINARY)
+#     img = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel, iterations=iter)
+#     # img = cv2.medianBlur(img, 5)
+#     return img
 #
-pass  #
+#
+# cap = cv2.VideoCapture("vtest.avi")
+# MOG = cv2.createBackgroundSubtractorMOG2(detectShadows=False)
+# KNN = cv2.createBackgroundSubtractorKNN(detectShadows=False)
+# w = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+# h = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+# cnt = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+# kernelSize = 2
+# iterationNum = 3
+# kernel = np.ones((kernelSize, kernelSize), np.uint8)
+# while cap.isOpened():
+#     ret, frame = cap.read()
+#     if not ret:
+#         print("EOF")
+#         break
+#     MOGMask = MOG.apply(frame)
+#     MOGMask = imgBlur(MOGMask, kernel, iterationNum)
+#     KNNMask = KNN.apply(frame)
+#     KNNMask = imgBlur(KNNMask, kernel, iterationNum)
+#     cv2.imshow("frame", frame)
+#     cv2.imshow("MOGMask", MOGMask)
+#     cv2.imshow("KNNMask", KNNMask)
+#     keyVal = cv2.waitKey(10)
+#     if keyVal == ord("q"):
+#         print("user interrupt")
+#         break
+#     elif keyVal == ord(" "):
+#         cv2.waitKey(0)
+# cap.release()
+# cv2.destroyAllWindows()
+#
+pass  # mean shift object tracking & cam shift
+# cap = cv2.VideoCapture("slow_traffic_small.mp4")
+# frameW = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+# frameH = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+# frameCnt = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+# # mean shift needs a initial location, so, get a frame
+# _, frame = cap.read()
+# x, y, w, h = 300, 200, 100, 50
+# # ROI to retrieve histogram
+# trackWindow = [x, y, w, h]
+# # ROI = np.zeros((int(frameH), int(frameW)), np.uint8)
+# # ROI[y:y + h, x:x + w] = 255
+# ROI = frame[y:y + h, x:x + w]
+# hsv_ROI = cv2.cvtColor(ROI, cv2.COLOR_BGR2HSV)
+# mask = cv2.inRange(hsv_ROI, np.array((0., 60., 32.)), np.array((180., 255., 255.)))  # add a point represent float
+# roi_hst = cv2.calcHist([hsv_ROI], [0], mask, [180], [0, 180])  # arg 2 is channel number
+# cv2.normalize(roi_hst, roi_hst, 0, 255, cv2.NORM_MINMAX)
+# term_crit = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1)
+# while cap.isOpened():
+#     ret, frame = cap.read()
+#     if not ret:
+#         print("EOF")
+#         break
+#     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+#     dst = cv2.calcBackProject([hsv], [0], roi_hst, [0, 180], 1)
+#     # mean shift
+#     if False:
+#         _, trackWindow = cv2.meanShift(dst, trackWindow, term_crit)
+#         x, y, w, h = trackWindow
+#         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 4)
+#     else:
+#         ret, _ = cv2.CamShift(dst, trackWindow, term_crit)
+#         pts = cv2.boxPoints(ret)
+#         pts = np.int0(pts)
+#         cv2.polylines(frame, [pts], True, (255, 0, 0), 4)
+#     cv2.imshow("frame", frame)
+#     cv2.imshow("dst", dst)
+#     keyVal = cv2.waitKey(10)
+#     if keyVal == ord("q"):
+#         print("interrupted by user")
+#         break
+#     elif keyVal == ord(" "):
+#         cv2.waitKey(0)
+# cap.release()
+# cv2.destroyAllWindows()
+#
+pass  # camera calibration
+# https://www.youtube.com/watch?v=HNfPbw-1e_w&list=PLAp0ZhYvW6XbEveYeefGSuLhaPlFML9gP&index=14
+# https://docs.opencv.org/3.4/d4/d94/tutorial_camera_calibration.html
+# https://docs.opencv.org/master/dc/dbb/tutorial_py_calibration.html
+
 #
 pass  #
 #
