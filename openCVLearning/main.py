@@ -434,25 +434,43 @@ pass  # hgn face matching
 # cap = cv2.VideoCapture(0)
 # _, frame = cap.read()
 # faces = face_cascade.detectMultiScale(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), 1.1, 4)
-# x, y, w, h = faces[0]
+# print(f"{len(faces)} faces were detected")
+# x, y, w, h = 0, 0, 0, 0
+# # maximum face area
+# for face in faces:
+#     if face[2] * face[3] > w * h:
+#         x, y, w, h = face
 # hgnFace = frame[y: y + h, x: x + w]
 # grayFace = cv2.cvtColor(hgnFace, cv2.COLOR_BGR2GRAY)
 # cv2.imshow("hgnFace", hgnFace)
 # # cv2.waitKey(0)
-#
-# threshols = 0.6
-# w = grayFace.shape[1]
-# h = grayFace.shape[0]
+# threshold = 0.8
 # while cap.isOpened():
 #     _, frame = cap.read()
 #     grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-#     res = cv2.matchTemplate(grayFrame, grayFace, cv2.TM_CCOEFF_NORMED)
-#     loc = np.where(res >= threshols)
+#     rx, ry, rw, rh = 0, 0, 0, 0
+#     ROIs = face_cascade.detectMultiScale(grayFrame, 1.1, 4)
+#     # print(f"{len(ROIs)} ROIs were detected")
+#     for ROI in ROIs:
+#         if ROI[2] * ROI[3] > rw * rh:
+#             rx, ry, rw, rh = ROI
+#     tmpGrayFace = cv2.resize(grayFace, (rw, rh))
+#     w = tmpGrayFace.shape[1]
+#     h = tmpGrayFace.shape[0]
+#     # expand roi
+#     rx -= 20; ry -= 20; rw += 40; rh += 40
+#
+#     finalROI = grayFrame[ry: ry + rh, rx: rx + rw]
+#     finalROI_color = frame[ry: ry + rh, rx: rx + rw]
+#     res = cv2.matchTemplate(finalROI, tmpGrayFace, cv2.TM_CCORR_NORMED)
+#     loc = np.where(res >= threshold)
 #     print(f"{len(loc[0])} results matched")
-#     for i in range(len(loc[0])):
-#         x = loc[0][i]
-#         y = loc[1][i]
-#         frame = cv2.rectangle(frame, (y, x), (y + w, x + h), (0, 255, 0), 2)
+#     # draw faces on color roi
+#     if len(loc[0]) > 0:
+#         x = loc[0][0]
+#         y = loc[1][0]
+#         cv2.rectangle(finalROI_color, (y, x), (y + w, x + h), (0, 255, 0), 2)
+#     frame[ry: ry + rh, rx: rx + rw] = finalROI_color
 #     cv2.imshow("capture", frame)
 #     if cv2.waitKey(40) == ord("q"):
 #         break
@@ -647,35 +665,53 @@ pass  # hough circle transform
 # cv2.destroyAllWindows()
 #
 pass  # haar cascade classifier
-# haar comes with a trainer and a classifier
-# references https://github.com/opencv/opencv/tree/master/data/haarcascades
-face_cascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
-eye_cascade = cv2.CascadeClassifier("haarcascade_eye_tree_eyeglasses.xml")
-cap = cv2.VideoCapture(0)
-while cap.isOpened():
-    _, frame = cap.read()
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, 1.2, 4)
-    for face in faces:
-        x, y, w, h = face
-        roi_gray = gray[y: y + h, x: x + w]  # make sure no eyes outside the face
-        roi_color = frame[y: y + h, x: x + w]
-        eyes = eye_cascade.detectMultiScale(roi_gray, 1.1, 4)
-        for eye in eyes:
-            x, y, w, h = eye
-            cv2.rectangle(roi_color, (x, y), (x + w, y + h), (255, 0, 0), 5)
-        x, y, w, h = face
-        frame[y: y + h, x: x + w] = roi_color
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 5)
-        cv2.imshow("face", frame)
-
-    if cv2.waitKey(20) == ord("q"):
-        print("exit by user")
-        break
-cap.release()
-cv2.destroyAllWindows()
+# # haar comes with a trainer and a classifier
+# # references https://github.com/opencv/opencv/tree/master/data/haarcascades
+# face_cascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+# eye_cascade = cv2.CascadeClassifier("haarcascade_eye_tree_eyeglasses.xml")
+# cap = cv2.VideoCapture(0)
+# while cap.isOpened():
+#     _, frame = cap.read()
+#     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+#     faces = face_cascade.detectMultiScale(gray, 1.2, 4)
+#     for face in faces:
+#         x, y, w, h = face
+#         # to make sure no eyes outside the face
+#         roi_gray = gray[y: y + h, x: x + w]
+#         roi_color = frame[y: y + h, x: x + w]
+#         eyes = eye_cascade.detectMultiScale(roi_gray, 1.1, 4)
+#         for eye in eyes:
+#             x, y, w, h = eye
+#             cv2.rectangle(roi_color, (x, y), (x + w, y + h), (255, 0, 0), 5)
+#         # replace back eye detection result
+#         x, y, w, h = face
+#         frame[y: y + h, x: x + w] = roi_color
+#         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 5)
+#         cv2.imshow("face", frame)
 #
-pass  #
+#     if cv2.waitKey(20) == ord("q"):
+#         print("exit by user")
+#         break
+# cap.release()
+# cv2.destroyAllWindows()
+#
+pass  # harris corner detection & Shi Tomasi corner detection
+# chess = cv2.imread("chessboard.png")
+# gray = cv2.cvtColor(chess, cv2.COLOR_BGR2GRAY)
+# gray = np.float32(gray)
+# dst = cv2.cornerHarris(gray, 2, 3, 0.04)
+# dst = cv2.dilate(dst, None)
+# chessHarris = chess.copy()
+# chessHarris[dst > 0.01 * dst.max()] = [0, 0, 255]
+# corners = cv2.goodFeaturesToTrack(gray, 50, 0.01, 10)
+# chessShi = chess.copy()
+# for corner in corners:
+#     x, y = np.int32(corner.ravel())
+#     cv2.circle(chessShi, (x, y), 5, (0, 255, 0), 5)
+# cv2.imshow("chessHarris", chessHarris)
+# cv2.imshow("Shi Tomasi", chessShi)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
 #
 pass  #
 #
