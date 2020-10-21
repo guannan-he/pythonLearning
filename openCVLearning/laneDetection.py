@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 # 1280 * 720 only
-calibrateCamera = 1
+calibrateCamera = True
 singleFrameMode = True
 isAccelerate = True
 fileNames = ["harder_challenge_video.mp4", "challenge_video.mp4", "curvature.mp4"]
@@ -39,7 +39,7 @@ def calibrateCameraFunc(size1, size2, w, h, thresh, framePath, frameCnt, format 
     # camMat, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), thresh, (w, h))
     # mapx, mapy = cv2.initUndistortRectifyMap(mtx, dist, None, camMat, (w, h), 5)
     # return (mapx, mapy, roi)
-    return (mtx, dist)
+    return [mtx, dist]
 
 
 def find_pt_inline(p1, p2, y):
@@ -80,7 +80,7 @@ def getPerspectPara(canny_l, canny_h, w, h, ifCali, mtx, dist, warpSize):
         cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), thickness=1)
     vp = np.matmul(np.linalg.inv(Lhs), Rhs)
     width = x_max - x_min
-    top = vp[1] + 65
+    top = vp[1] + 50
     bot = frameH - 40
     width = 500
     p1 = [vp[0] - width / 2, top]
@@ -100,7 +100,12 @@ def getPerspectPara(canny_l, canny_h, w, h, ifCali, mtx, dist, warpSize):
         cv2.imshow("mask", img)
         cv2.imshow("warped", warped)
         cv2.waitKey(0)
-    return (M, M_inv)
+    return [M, M_inv]
+
+
+def kalmanFilter(ParaLast, ParaNow, PLast):
+    ParaNow = (ParaNow + ParaLast) / 2
+    return [ParaNow, PLast]
 
 
 cap = cv2.VideoCapture(videoFile)
@@ -122,26 +127,104 @@ if isAccelerate:
          [-1.08436207e-19, -2.37081154e-03, 1.00000000e+00]])
     M_inv = np.array([[1.00000000e+00, -7.97723538e-01, 3.89662354e+02], [0.00000000e+00, -5.26022815e-01, 4.86796509e+02],
              [0.00000000e+00, -1.24710093e-03, 1.00000000e+00]])
+    # M = np.array([[-1.18540581e-01, -5.92702907e-01, 3.25825964e+02], [1.17768713e-16, - 1.76409676e+00, 8.32294691e+02],[2.70519917e-19, -2.37081153e-03, 1.00000000e+00]])
+    # M_inv = np.array([[1.00000000e+00, -8.59657457e-01, 3.89662354e+02], [0.00000000e+00, -5.66862375e-01, 4.71796509e+02],[0.00000000e+00, -1.34392381e-03, 1.00000000e+00]])
 else:
     M, M_inv = getPerspectPara(canny_l, canny_h, frameW, frameH, calibrateCamera, mtx, dist, warpSize)
+
 ##############################################################################################
 
+# boundaries
+leftB = warpSize[0] / 5
+rightB = warpSize[0] - leftB
+centerL = warpSize[0] / 2
+# kalman filter parameter
+# x = f(y)
+lParaLast = np.array([0, 0, leftB])
+rParaLast = np.array([0, 0, rightB])
+lPLast = None
+rPLast = None
+# main loop
 while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
         print("EOF")
         break
     if calibrateCamera:
-        remap = cv2.undistort(frame, mtx, dist, None, mtx)
+        remap = cv2.undistort(frame, mtx, dist)
     else:
         remap = frame.copy()
-
+    ###################################################################
     wraped = cv2.warpPerspective(frame, M, warpSize)
-
-    cv2.imshow("org", frame)
+    hls = cv2.cvtColor(wraped, cv2.COLOR_BGR2HLS)
+    s = hls[:, :, 2]
+    _, mask = cv2.threshold(s, 127, 255, cv2.THRESH_OTSU)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, (5, 5))
+    # mask = cv2.medianBlur(mask, 3)
+    # cv2.imshow("mask", mask)
+    canny = cv2.Canny(mask, 200, 100)
+    lines = cv2.HoughLinesP(canny, 0.5, np.pi / 180, 20, minLineLength=40, maxLineGap=50)
+    lPts = []
+    rPts = []
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        if (x1 < leftB and x2 < leftB) or (x1 > rightB and x2 > rightB):
+            continue
+        k = (x2 - x1) / (y2 - y1)
+        if k > 0.5 or k < -0.5:
+            continue
+        if x1 < centerL:
+            lPts.append(np.array([x1, y1]))
+            lPts.append(np.array([x2, y2]))
+        else:
+            rPts.append(np.array([x1, y1]))
+            rPts.append(np.array([x2, y2]))
+        # cv2.line(wraped, (x1, y1), (x2, y2), (0, 255, 0), 4)
+    lPts = np.array(lPts)
+    rPts = np.array(rPts)
+    if len(lPts) > 4 and (max(lPts[:,1]) - min(lPts[:,1])) > warpSize[1] // 2:
+        lParaNow = np.polyfit(lPts[:, 1], lPts[:, 0], 2)
+    else:
+        lParaNow = lParaLast
+    if len(rPts) > 4 and (max(rPts[:,1]) - min(rPts[:,1])) > warpSize[1] // 2:
+        rParaNow = np.polyfit(rPts[:, 1], rPts[:, 0], 2)
+    else:
+        rParaNow = rParaLast
+    # kalman filter
+    # lParaNow, lPNow = kalmanFilter(lParaLast, lParaNow, lPLast)
+    # rParaNow, rPNow = kalmanFilter(rParaLast, rParaNow, rPLast)
+    # draw lines
+    xLeftLast = int(lParaNow[2])
+    xRightLast = int(rParaNow[2])
+    lastI = 0
+    lPoly = [[xLeftLast, lastI]]
+    rPoly = [[xRightLast, lastI]]
+    for i in range(50, warpSize[1], 50):
+        xLeftNow = int((lParaNow[0] * i + lParaNow[1]) * i + lParaNow[2])
+        xRightNow = int((rParaNow[0] * i + rParaNow[1]) * i + rParaNow[2])
+        lPoly.append([xLeftNow, i])
+        rPoly.append([xRightNow, i])
+        # cv2.line(wraped, (xLeftLast, lastI), (xLeftNow, i), (0, 255, 0), 6)
+        # cv2.line(wraped, (xRightLast, lastI), (xRightNow, i), (0, 255, 0), 6)
+        xLeftLast = xLeftNow
+        xRightLast = xRightNow
+        lastI = i
+    rPoly.reverse()
+    Poly = np.array(lPoly + rPoly)
+    cv2.fillPoly(wraped, [Poly], (0, 255, 0))
+    lParaLast = lParaNow
+    rParaLast = rParaNow
+    ###################################################################
+    # cv2.imshow("org", frame)
+    unarped = cv2.warpPerspective(wraped, M_inv, (frameW, frameH))
+    remap = cv2.addWeighted(remap, 1, unarped, 0.4, 0)
     cv2.imshow("remap", remap)
-    cv2.imshow("wraped", wraped)
-    key = cv2.waitKey(20)
+    # cv2.imshow("wraped", wraped)
+    # cv2.imshow("reverse", unarped)
+    # cv2.imshow("h", hls[:, :, 2])
+    # cv2.imshow("l", l)
+    # cv2.imshow("s", mask)
+    key = cv2.waitKey(5)
     if key == ord("q"):
         print("user exit")
         break
